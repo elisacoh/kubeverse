@@ -1,0 +1,280 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Space Grotesk', 'Inter', ui-sans-serif, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --color-void: #060a18;
+  --color-navy: #0b1430;
+  --color-deep: #121d42;
+  --color-teal: #3fd4c0;
+  --color-cyan: #6fe3ff;
+  --color-lavender: #b3a4ff;
+  --color-lilac: #d7ccff;
+  --color-warm: #ffb37a;
+  --color-gold: #ffd38a;
+  --color-ok: #5ff0c8;
+  --color-warn: #ffb84d;
+  --color-bad: #ff6b6b;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--color-void);
+  color: #e6eaff;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer components {
+  .glass {
+    background: linear-gradient(180deg, rgb(22 31 68 / 0.78), rgb(11 17 42 / 0.82));
+    border: 1px solid rgb(179 164 255 / 0.14);
+    box-shadow:
+      0 18px 40px -18px rgb(0 0 0 / 0.65),
+      inset 0 1px 0 rgb(255 255 255 / 0.05);
+    backdrop-filter: blur(14px) saturate(1.2);
+    -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  }
+
+  .hud-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-radius: 0.65rem;
+    padding: 0.45rem 0.7rem;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: rgb(214 220 255 / 0.85);
+    transition:
+      background 150ms,
+      color 150ms,
+      opacity 150ms;
+  }
+  .hud-btn:hover:not(:disabled) {
+    background: rgb(179 164 255 / 0.12);
+    color: white;
+  }
+  .hud-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .hud-btn:focus-visible {
+    outline: 2px solid var(--color-cyan);
+    outline-offset: 1px;
+  }
+
+  .primary-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-radius: 0.65rem;
+    padding: 0.45rem 0.85rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #06202a;
+    background: linear-gradient(90deg, rgb(63 212 192 / 0.92), rgb(111 227 255 / 0.92));
+    transition: filter 150ms;
+  }
+  .primary-btn:hover {
+    filter: brightness(1.1);
+  }
+  .primary-btn:focus-visible {
+    outline: 2px solid white;
+    outline-offset: 1px;
+  }
+
+  .kv-card-in {
+    animation: kv-card-in 260ms ease-out;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    border-radius: 999px;
+    padding: 0.12rem 0.55rem;
+    font-size: 0.68rem;
+    font-weight: 500;
+    background: rgb(255 255 255 / 0.06);
+    border: 1px solid rgb(255 255 255 / 0.08);
+    color: rgb(220 226 255 / 0.85);
+    white-space: nowrap;
+  }
+
+  .section-title {
+    font-size: 0.64rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgb(179 164 255 / 0.7);
+    font-weight: 600;
+    margin-bottom: 0.45rem;
+  }
+
+  /* In-world labels (rendered through drei <Html>) */
+  .kv-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+    padding: 0.22rem 0.6rem;
+    border-radius: 999px;
+    font: 500 11px var(--font-mono);
+    color: #eef1ff;
+    background: rgb(9 14 36 / 0.82);
+    border: 1px solid rgb(111 227 255 / 0.3);
+    box-shadow: 0 6px 18px -6px rgb(0 0 0 / 0.6);
+    transform: translateY(-4px);
+  }
+  .kv-label-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+  }
+
+  .kv-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+    padding: 0.15rem 0.5rem;
+    border-radius: 0.4rem;
+    font: 500 10.5px var(--font-mono);
+    color: rgb(230 234 255 / 0.9);
+    background: rgb(9 14 36 / 0.72);
+    border: 1px solid rgb(179 164 255 / 0.22);
+  }
+  .kv-tag.is-active {
+    border-color: var(--color-cyan);
+    color: white;
+  }
+  .kv-tag.is-net {
+    border-color: rgb(63 212 192 / 0.5);
+    color: #b9fff3;
+  }
+  .kv-tag.is-kernel {
+    border-color: rgb(255 179 122 / 0.5);
+    color: #ffe0c7;
+  }
+  .kv-tag-role {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgb(179 164 255 / 0.85);
+  }
+
+  .kv-callout {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    width: max-content;
+    max-width: 260px;
+    padding: 0.4rem 0.65rem;
+    border-radius: 0.6rem;
+    background: rgb(9 14 36 / 0.78);
+    border: 1px solid rgb(179 164 255 / 0.25);
+    font-size: 11px;
+    line-height: 1.35;
+    color: rgb(214 220 255 / 0.75);
+  }
+  .kv-callout b {
+    font: 600 12px var(--font-display);
+    color: #f3f0ff;
+  }
+  .kv-callout.is-net {
+    border-color: rgb(63 212 192 / 0.45);
+  }
+  .kv-callout.is-net b {
+    color: #b9fff3;
+  }
+  .kv-callout.is-kernel {
+    border-color: rgb(255 179 122 / 0.45);
+  }
+  .kv-callout.is-kernel b {
+    color: #ffe0c7;
+  }
+
+  .kv-nameplate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    white-space: nowrap;
+    padding: 0.3rem 0.8rem 0.35rem;
+    border-radius: 0.7rem;
+    font: 600 12.5px var(--font-display);
+    color: #f3f6ff;
+    background: rgb(9 14 36 / 0.7);
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+    cursor: pointer;
+    pointer-events: auto;
+    transition:
+      border-color 150ms,
+      background 150ms,
+      transform 150ms;
+  }
+  .kv-nameplate:hover,
+  .kv-nameplate.is-active {
+    border-color: var(--accent);
+    background: rgb(14 22 52 / 0.9);
+    transform: translateY(-1px);
+  }
+  .kv-nameplate-kind {
+    font: 500 9px var(--font-sans);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0.85;
+  }
+}
+
+@keyframes kv-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* Draws the eye to a card as it appears: a ring pulses outwards a few times, then a soft rim stays. */
+.kv-attention {
+  position: relative;
+  border-color: rgb(63 212 192 / 0.55);
+  box-shadow:
+    0 0 0 1px rgb(63 212 192 / 0.25),
+    0 0 28px -6px rgb(63 212 192 / 0.45),
+    0 18px 40px -18px rgb(0 0 0 / 0.65);
+}
+.kv-attention::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  border: 2px solid var(--color-teal);
+  pointer-events: none;
+  opacity: 0;
+  animation: kv-attention 1.5s ease-out 300ms 3;
+}
+@keyframes kv-attention {
+  0% {
+    opacity: 0.95;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.06, 1.12);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kv-attention::after {
+    animation: none;
+  }
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(179 164 255 / 0.25) transparent;
+}

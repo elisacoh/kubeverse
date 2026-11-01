@@ -1,0 +1,57 @@
+import { Suspense } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { AdaptiveDpr } from '@react-three/drei';
+import { useAppStore } from '../state/useAppStore';
+import { Atmosphere } from './Atmosphere';
+import { CameraRig } from './camera/CameraRig';
+import { ClusterWorld } from './ClusterWorld';
+import { PodAnatomy } from './anatomy/PodAnatomy';
+import type { Vec3 } from './layout';
+import { labelLayer } from './WorldLabel';
+
+/** The first camera flight glides in from here to the cluster overview. */
+const INTRO_POSITION: Vec3 = [0, 34, 62];
+
+export function WorldCanvas() {
+  const inside = useAppStore((s) => s.view.kind === 'pod');
+
+  const onPointerMissed = (e: MouseEvent) => {
+    const { view, selection, selectPod, clearSelection, requestPivot } = useAppStore.getState();
+    if (e.type === 'dblclick') {
+      const rect = (e.target as HTMLElement).getBoundingClientRect();
+      requestPivot([((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1]);
+      return;
+    }
+    if (view.kind === 'pod') {
+      if (selection?.kind === 'container') selectPod(view.podUid);
+    } else if (selection) {
+      clearSelection();
+    }
+  };
+
+  return (
+    <div className="absolute inset-0">
+      <div
+        ref={(el) => {
+          labelLayer.current = el;
+        }}
+        className="pointer-events-none absolute inset-0 z-10 overflow-hidden"
+      />
+      <Canvas
+        shadows="percentage"
+        dpr={[1, 2]}
+        camera={{ position: INTRO_POSITION, fov: 42, near: 0.1, far: 500 }}
+        onPointerMissed={onPointerMissed}
+        gl={{ antialias: true, powerPreference: 'high-performance' }}
+      >
+        <color attach="background" args={['#060a18']} />
+        <Suspense fallback={null}>
+          <Atmosphere showIslets={!inside} />
+          {inside ? <PodAnatomy /> : <ClusterWorld />}
+        </Suspense>
+        <CameraRig />
+        <AdaptiveDpr pixelated={false} />
+      </Canvas>
+    </div>
+  );
+}
