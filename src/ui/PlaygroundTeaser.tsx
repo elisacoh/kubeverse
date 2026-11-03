@@ -3,8 +3,8 @@ import { ArrowLeft, Check, Flame } from 'lucide-react';
 import { useAppStore } from '../state/useAppStore';
 import preview from '../assets/hardcore-preview.png';
 
-/** Must match the hidden form in index.html, which is what Netlify detects at deploy time. */
-const FORM_NAME = 'playground-waitlist';
+/** Stored in the labelis.co admin. It only accepts requests from the deployed kubeverse.labelis.co origin. */
+const WAITLIST_ENDPOINT = 'https://labelis.co/api/waitlist';
 
 type Status = 'idle' | 'sending' | 'done' | 'error';
 
@@ -61,10 +61,10 @@ function Waitlist() {
     e.preventDefault();
     setStatus('sending');
     try {
-      const res = await fetch('/', {
+      const res = await fetch(WAITLIST_ENDPOINT, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ 'form-name': FORM_NAME, email }).toString(),
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ email }),
       });
       setStatus(res.ok ? 'done' : 'error');
     } catch {
@@ -87,7 +87,7 @@ function Waitlist() {
   }
 
   return (
-    <form name={FORM_NAME} onSubmit={submit} className="flex flex-col gap-3">
+    <form onSubmit={submit} className="flex flex-col gap-3">
       <label htmlFor="waitlist-email" className="text-[15px] font-semibold text-white">
         Want in? I will let you know when it is live.
       </label>
