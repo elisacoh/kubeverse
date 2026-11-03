@@ -4,7 +4,7 @@ import { useAppStore, type AppMode } from '../state/useAppStore';
 const MODES: { id: AppMode; label: string; icon: LucideIcon; available: boolean }[] = [
   { id: 'explore', label: 'Explore', icon: Compass, available: true },
   { id: 'learn', label: 'Learn', icon: GraduationCap, available: true },
-  { id: 'playground', label: 'Playground', icon: FlaskConical, available: false },
+  { id: 'playground', label: 'Playground', icon: FlaskConical, available: true },
 ];
 
 export function ModeSelector() {

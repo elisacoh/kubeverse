@@ -15,6 +15,10 @@
     <script src="https://labelis.co/embed-track.js" defer></script>
   </head>
   <body>
+    <!-- Static copy of the Playground waitlist form, so Netlify Forms detects it at deploy time. -->
+    <form name="playground-waitlist" data-netlify="true" hidden>
+      <input type="email" name="email" />
+    </form>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

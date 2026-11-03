@@ -32,6 +32,7 @@ import { OriginTrait, StaticBasePlate } from './OriginTrait';
 import { LearningBeacon } from './LearningBeacon';
 import { useLearningHighlight } from '../useLearningHighlight';
 import { useFirstAppearance } from '../appearance';
+import { creaturePoses } from '../creaturePose';
 
 interface Props {
   pod: Pod;
@@ -143,6 +144,7 @@ function PodCreatureBody({ pod, position, accent, facing = 0, scale = 1 }: Props
   const phase = (seed % 1000) / 159;
   const slump = seed % 2 === 0 ? 1 : -1;
 
+  const placement = useRef<Group>(null);
   const root = useRef<Group>(null);
   const body = useRef<Group>(null);
   const eyes = useRef<Group>(null);
@@ -173,6 +175,8 @@ function PodCreatureBody({ pod, position, accent, facing = 0, scale = 1 }: Props
 
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime;
+    const pose = creaturePoses.get(uid);
+    if (pose) pose.anchor = placement.current;
     if (root.current) {
       const target = (hovered ? 1.12 : 1) * scale;
       const s = root.current.scale.x + (target - root.current.scale.x) * Math.min(1, delta * 10);
@@ -244,14 +248,16 @@ function PodCreatureBody({ pod, position, accent, facing = 0, scale = 1 }: Props
         : Math.sin(t * (pending ? 0.9 : 2) + phase) * (pending ? 0.015 : 0.035);
       const hop = selected ? Math.max(0, Math.sin(t * 4)) * 0.06 : 0;
       const breathe = down * Math.sin(t * 1.3 + phase) * 0.006;
+      const sleep = pose?.droop ?? 0;
+      const sleepBreath = sleep * (Math.sin(t * 1.1) * 0.012 - 0.03);
       body.current.position.set(
         glitch * Math.sin(t * 71 + phase) * 0.025,
-        0.44 + (bob + hop) * calm - 0.055 * down - Math.min(0, collapse) * 0.08 + breathe,
+        0.44 + (bob * (1 - sleep) + hop) * calm - 0.055 * down - Math.min(0, collapse) * 0.08 + breathe + sleepBreath,
         glitch * Math.cos(t * 67 + phase) * 0.015,
       );
       body.current.rotation.set(
-        down * 0.1,
-        Math.sin(t * 0.45 + phase) * 0.35 * (1 - down * 0.7),
+        down * 0.1 + sleep * 0.22,
+        pose?.gaze ?? Math.sin(t * 0.45 + phase) * 0.35 * (1 - down * 0.7),
         (distressed ? Math.sin(t * 9 + phase) * 0.03 : 0) + collapse * 0.2 * slump + glitch * Math.sin(t * 47 + phase) * 0.09,
       );
       const squash = (1 + Math.sin(t * 4 + phase) * 0.015) * (1 - 0.09 * collapse);
@@ -262,7 +268,17 @@ function PodCreatureBody({ pod, position, accent, facing = 0, scale = 1 }: Props
       const cycle = (t + phase * 3) % 4.2;
       const blink = cycle < 0.12 ? 0.15 : 1;
       eyes.current.visible = !crossed;
-      eyes.current.scale.y = (distressed ? 0.35 : pending ? 0.2 : blink) * open;
+      eyes.current.scale.y = pose
+        ? Math.max(0.06, pose.eyes)
+        : (distressed ? 0.35 : pending ? 0.2 : blink) * open;
+    }
+    if (pose) {
+      const wave = Math.sin(t * 2.2) * 0.5 + 0.5;
+      for (const m of bellyMats.current) if (m) m.emissiveIntensity = 2 + pose.glow * (wave * 2.4 - 0.8);
+      if (bodyMat.current) {
+        bodyMat.current.emissive.copy(baseBody);
+        bodyMat.current.emissiveIntensity = pose.glow * (0.06 + wave * 0.22);
+      }
     }
     if (tracksLoop) {
       if (xEyes.current) xEyes.current.visible = crossed;
@@ -322,7 +338,7 @@ function PodCreatureBody({ pod, position, accent, facing = 0, scale = 1 }: Props
   const lightSpacing = 0.075;
 
   return (
-    <group position={position} rotation={[0, facing, 0]}>
+    <group ref={placement} position={position} rotation={[0, facing, 0]}>
       {highlighted && <LearningBeacon radius={0.7} height={1.8} />}
       <Arrival active={arrives}>
       <group ref={root} scale={scale} {...hover} onClick={onClick} onDoubleClick={onDoubleClick}>
@@ -427,7 +443,7 @@ function PodCreatureBody({ pod, position, accent, facing = 0, scale = 1 }: Props
             );
           })}
 
-          <OriginTrait origin={pod.origin} accent={accent} phase={phase} name={pod.metadata.name} />
+          <OriginTrait origin={pod.origin} accent={accent} phase={phase} name={pod.metadata.name} uid={uid} />
 
           {(distressed || crashLooping) && (
             <mesh ref={auraMesh} scale={1.35} visible={!crashLooping} raycast={() => null}>

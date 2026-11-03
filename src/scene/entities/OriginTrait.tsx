@@ -4,6 +4,7 @@ import { Billboard } from '@react-three/drei';
 import { CanvasTexture, CatmullRomCurve3, DoubleSide, ExtrudeGeometry, Shape, SRGBColorSpace, Vector3, type Group } from 'three';
 import type { PodOrigin } from '../../domain/types';
 import { palette } from '../palette';
+import { creaturePoses } from '../creaturePose';
 
 interface Props {
   origin: PodOrigin;
@@ -11,6 +12,8 @@ interface Props {
   phase: number;
   /** The Pod's name: a StatefulSet Pod wears its ordinal (web-0, web-1…). */
   name: string;
+  /** Looks up a scripted pose (see creaturePose). */
+  uid?: string;
 }
 
 /**
@@ -23,10 +26,10 @@ interface Props {
  *  - Static: halo, crown and runes + base plate bolted to the Node (system, kubelet-managed)
  *  - Standalone: nothing — no controller looks after it
  */
-export function OriginTrait({ origin, accent, phase, name }: Props) {
+export function OriginTrait({ origin, accent, phase, name, uid }: Props) {
   switch (origin) {
     case 'replicaset':
-      return <Antenna accent={accent} phase={phase} />;
+      return <Antenna accent={accent} phase={phase} uid={uid} />;
     case 'daemonset':
       return <Horns accent={accent} />;
     case 'statefulset':
@@ -46,11 +49,20 @@ export function OriginTrait({ origin, accent, phase, name }: Props) {
   }
 }
 
-function Antenna({ accent, phase }: { accent: string; phase: number }) {
+function Antenna({ accent, phase, uid }: { accent: string; phase: number; uid?: string }) {
   const tip = useRef<Group>(null);
   const h = 0.2;
   useFrame(({ clock }) => {
-    if (tip.current) tip.current.rotation.z = Math.sin(clock.elapsedTime * 2.2 + phase) * 0.18;
+    if (!tip.current) return;
+    const sway = Math.sin(clock.elapsedTime * 2.2 + phase) * 0.18;
+    const pose = uid ? creaturePoses.get(uid) : undefined;
+    if (!pose) {
+      tip.current.rotation.z = sway;
+      return;
+    }
+    const limp = 1 - pose.antenna;
+    tip.current.rotation.z = sway * pose.antenna + limp * 0.75;
+    tip.current.rotation.x = limp * 0.5;
   });
   return (
     <group ref={tip} position={[0, 0.33, 0]}>

@@ -117,10 +117,8 @@ export const useAppStore = create<AppState>()((set, get) => ({
   cameraNonce: 0,
   pivotRequest: null,
 
-  setMode: (mode) => {
-    // Playground is not implemented yet.
-    if (mode !== 'playground') set({ mode });
-  },
+  // The Playground teaser covers the world, so nothing should stay selected behind it.
+  setMode: (mode) => set(mode === 'playground' ? { mode, selection: null } : { mode }),
 
   loadWorld: (cluster, presentation) => set({ cluster, presentation, hoveredId: null }),
 

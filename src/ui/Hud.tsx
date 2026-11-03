@@ -14,6 +14,7 @@ export function Hud() {
   const goToCluster = useAppStore((s) => s.goToCluster);
   const recenter = useAppStore((s) => s.recenter);
   const learning = useAppStore((s) => s.mode === 'learn');
+  const playground = useAppStore((s) => s.mode === 'playground');
 
   const atRoot = view.kind === 'cluster' && !view.focus && !selection;
   const busy = transition !== null;
@@ -39,7 +40,7 @@ export function Hud() {
           <ModeSelector />
         </div>
 
-        {!learning && (
+        {!learning && !playground && (
           <div className="pointer-events-auto shrink-0">
             <ClusterHealth />
           </div>
@@ -47,7 +48,9 @@ export function Hud() {
       </header>
 
       {/* Bottom-left navigation */}
-      <div className="pointer-events-none fixed bottom-0 left-0 z-30 flex flex-col items-start gap-2 p-3 sm:p-4">
+      <div
+        className={`pointer-events-none fixed bottom-0 left-0 z-30 flex flex-col items-start gap-2 p-3 sm:p-4 ${playground ? 'hidden' : ''}`}
+      >
         {view.kind === 'pod' ? <AnatomyLegend /> : !learning && <FieldGuide />}
         <div className="pointer-events-auto glass flex items-center gap-0.5 rounded-xl p-1">
           <button type="button" className="hud-btn" onClick={back} disabled={atRoot || busy} title="Back (Esc)">

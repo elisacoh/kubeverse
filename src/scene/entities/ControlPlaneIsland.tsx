@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useContext, useMemo, useRef } from 'react';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import type { Group, Mesh } from 'three';
 import type { ControlPlaneComponent, Node } from '../../domain/types';
@@ -17,6 +17,7 @@ import { Emergence } from './Emergence';
 import { useLearningHighlight } from '../useLearningHighlight';
 import { useFirstAppearance } from '../appearance';
 import { isRevealed } from '../../state/presentation';
+import { CrystalControlPlane } from '../cinematicStyle';
 
 const ROCK_DEPTH = 4.6;
 
@@ -41,6 +42,7 @@ export function ControlPlaneIsland({ node, layout }: Props) {
   const accent = nodeAccentOf(name);
   const asArea = presentation.controlPlane === 'area';
   const firstAppearance = useFirstAppearance(node.metadata.uid);
+  const crystal = useContext(CrystalControlPlane);
 
   const highlighted = useLearningHighlight({ kind: 'node', role: node.role });
   const pods = useMemo(() => podsOnNode(cluster, name), [cluster, name]);
@@ -79,7 +81,7 @@ export function ControlPlaneIsland({ node, layout }: Props) {
             <torusGeometry args={[R, 0.06, 8, 6]} />
             <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={hovered || focused ? 1.8 : 0.9} />
           </mesh>
-          <FloatingRock seed={name} radius={R * 0.93} depth={ROCK_DEPTH} sides={6} accent={palette.lavender} />
+          <FloatingRock seed={name} radius={R * 0.93} depth={ROCK_DEPTH} sides={6} accent={palette.lavender} crystal={crystal} />
         </group>
 
         {components.map((c) =>
