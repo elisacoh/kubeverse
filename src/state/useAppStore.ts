@@ -107,7 +107,7 @@ export const exploreCluster = staticDemoSource.snapshot();
 export const useAppStore = create<AppState>()((set, get) => ({
   cluster: exploreCluster,
   presentation: FULL_PRESENTATION,
-  mode: 'explore',
+  mode: 'learn',
   pick: null,
   view: { kind: 'cluster' },
   selection: null,
