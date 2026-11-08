@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { AdaptiveDpr } from '@react-three/drei';
 import { useAppStore } from '../state/useAppStore';
+import { useViewportInsets } from '../state/viewportInsets';
 import { Atmosphere } from './Atmosphere';
 import { CameraRig } from './camera/CameraRig';
 import { ClusterWorld } from './ClusterWorld';
@@ -14,6 +15,7 @@ const INTRO_POSITION: Vec3 = [0, 34, 62];
 
 export function WorldCanvas() {
   const inside = useAppStore((s) => s.view.kind === 'pod');
+  const insets = useViewportInsets((s) => s.insets);
 
   const onPointerMissed = (e: MouseEvent) => {
     const { view, selection, selectPod, clearSelection, requestPivot } = useAppStore.getState();
@@ -30,7 +32,7 @@ export function WorldCanvas() {
   };
 
   return (
-    <div className="absolute inset-0">
+    <div className="absolute" style={{ top: insets.top, right: insets.right, bottom: insets.bottom, left: insets.left }}>
       <div
         ref={(el) => {
           labelLayer.current = el;

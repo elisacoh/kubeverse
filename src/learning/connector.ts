@@ -99,7 +99,7 @@ export const connectLearning = (): (() => void) => {
     if (app.mode === 'learn' && lesson && session) {
       app.loadWorld(buildSandboxCluster(session.world), presentationOf(lesson, session));
       if (app.view.kind !== 'pod') dropVanishedSelection();
-    } else if (app.mode !== 'learn' && app.cluster !== exploreCluster) {
+    } else if (app.mode === 'explore' && app.cluster !== exploreCluster) {
       app.loadWorld(exploreCluster, FULL_PRESENTATION);
     }
   };

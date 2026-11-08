@@ -116,7 +116,16 @@ const REPLICASET_SPACING = 5.4;
 const PENDING_DROP = 1.55;
 const PENDING_SPACING = 0.8;
 
-/** World positions of Deployments and their ReplicaSets (in creation order, left to right). */
+/** ReplicaSets that no Deployment manages (written directly, as in the Playground). */
+export const standaloneReplicaSets = (cluster: Cluster) =>
+  cluster.workloads.filter(
+    (w) => w.kind === 'ReplicaSet' && !w.metadata.ownerReferences.some((r) => r.controller && cluster.workloads.some((d) => d.metadata.uid === r.uid)),
+  );
+
+/**
+ * World positions of Deployments and their ReplicaSets (in creation order,
+ * left to right), then of standalone ReplicaSets, one row each.
+ */
 export const workloadPositions = (cluster: Cluster): Map<string, Vec3> => {
   const result = new Map<string, Vec3>();
   const deployments = cluster.workloads.filter((w) => w.kind === 'Deployment');
@@ -128,20 +137,38 @@ export const workloadPositions = (cluster: Cluster): Map<string, Vec3> => {
       result.set(rs.metadata.uid, add(pos, [(j - (owned.length - 1) / 2) * REPLICASET_SPACING, -REPLICASET_DROP, 0]));
     });
   });
+  standaloneReplicaSets(cluster).forEach((rs, k) => {
+    result.set(rs.metadata.uid, add(WORKLOAD_ANCHOR, [0, -REPLICASET_DROP, (deployments.length + k) * 6]));
+  });
   return result;
 };
 
-/** Pods that exist in the API but have no Node yet wait under the controller that created them. */
+/** Where Pods created directly (no controller) wait for a Node: the other side of the control plane. */
+export const STANDALONE_PENDING_ANCHOR: Vec3 = [-11.5, 3.2, -3.5];
+
+/**
+ * Pods that exist in the API but have no Node yet wait under the controller
+ * that created them. In the Playground, Pods created directly wait at their
+ * own anchor (in Learn, the request flow draws those).
+ */
 export const pendingPodPositions = (cluster: Cluster): Map<string, Vec3> => {
   const result = new Map<string, Vec3>();
   const anchors = workloadPositions(cluster);
   const byOwner = new Map<string, Pod[]>();
+  const standalone = cluster.source === 'playground';
   for (const p of cluster.pods) {
     if (p.nodeName) continue;
     const owner = p.metadata.ownerReferences.find((r) => r.controller);
+    if (!owner && standalone) {
+      byOwner.set('', [...(byOwner.get('') ?? []), p]);
+      continue;
+    }
     if (!owner || !anchors.has(owner.uid)) continue;
     byOwner.set(owner.uid, [...(byOwner.get(owner.uid) ?? []), p]);
   }
+  const loose = byOwner.get('');
+  byOwner.delete('');
+  loose?.forEach((p, i) => result.set(p.metadata.uid, add(STANDALONE_PENDING_ANCHOR, [(i - (loose.length - 1) / 2) * PENDING_SPACING * 1.4, 0, 0])));
   for (const [owner, pods] of byOwner) {
     const base = anchors.get(owner)!;
     pods.forEach((p, i) =>

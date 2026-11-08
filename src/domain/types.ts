@@ -300,7 +300,8 @@ export interface Cluster {
   name: string;
   kubernetesVersion: string;
   /** Marks generated/demo content so it is never confused with a live cluster. */
-  source: 'demo' | 'live';
+  /** 'playground': the in-browser simulation driven by the learner's kubectl commands. */
+  source: 'demo' | 'live' | 'playground';
   namespaces: readonly Namespace[];
   nodes: readonly Node[];
   pods: readonly Pod[];

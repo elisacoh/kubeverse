@@ -8,13 +8,13 @@ Everything runs in the browser. There is no real cluster behind it: the cluster 
 
 ## What you can do
 
-The app has two modes, switched from the bottom right corner.
+The app has three modes, switched from the selector at the top.
 
 **Explore** drops you into a demo cluster that is already running: one control plane, three worker Nodes and a handful of workloads across a few namespaces. You can click any island to focus on it, select a Pod to inspect it, press Enter to step inside it and see its containers, and open the field guide for short explanations of what you are looking at. One of the Pods is crash looping on purpose, so you can see what an unhealthy workload looks like.
 
 **Learn** is a guided path. Each lesson starts from a specific world, gives you one small objective at a time, and only lets you do what makes sense at that point. When you get something right, a card explains the concept you just touched. When you click the wrong thing, you get a nudge instead of a failure. Hints are there if you get stuck, and progress is saved in your browser.
 
-A third mode, Playground, is planned but not built yet.
+**Playground** is where you write the YAML yourself. Its Lessons take you from YAML basics to Pods, labels, ReplicaSets, Deployments, scaling, Services, ConfigMaps, storage, probes and resource limits. Each lesson follows the same loop: understand a concept, write the manifest in a real editor (field explanations on hover, three levels of hints, a solution if you need it), deploy it with `kubectl` in a terminal, watch it appear in the 3D world and in a My Cluster panel, then verify it. You can be guided field by field, fill in the blanks of a prepared manifest, or start from an empty file. The cluster is simulated and keeps running across lessons until you reset it. Scenarios and Hardcore, two troubleshooting modes, are coming later; you can leave your email to hear when they open.
 
 ## The lessons
 
@@ -73,6 +73,7 @@ src/
   domain/      Kubernetes objects, selectors, manifests, crash loop rules
   simulation/  the fake cluster: demo data and the controllers that reconcile it
   learning/    lessons, the engine that runs them, objectives, hints, concepts
+  playground/  the Playground: simulated API and controllers, kubectl, curriculum, editor support
   state/       app stores (view, selection, presentation, request flows)
   scene/       everything 3D: islands, Pods, camera, atmosphere, labels
   ui/          panels, inspectors, lesson cards, HUD
@@ -82,10 +83,12 @@ A lesson is plain data. It declares the world it starts from, which build action
 
 The controllers in `src/simulation/controllers.ts` are a small imitation of the real ones: a Deployment controller managing ReplicaSets, a ReplicaSet controller managing Pods, and a scheduler that keeps the Nodes with enough free room for the Pod's requests, then picks the one with the most free CPU. They are simplified on purpose. The goal is to show the idea of a reconcile loop clearly, not to reproduce every edge case of the real thing.
 
+The Playground has its own small cluster in `src/playground/sim/`: it parses and validates manifests, stores objects, and reconciles them on a deterministic clock (scheduling, image pulls, ReplicaSets, Deployments, Service endpoints, PVC binding, probes). The terminal and the lessons only talk to it through the `ClusterApi` interface in `backend.ts`, so a real backend could take its place. Lessons are data in `src/playground/curriculum/` and check parsed manifests, never raw text. Some things are deliberately not simulated: there is no real network traffic or disk, resource limits are not enforced at runtime, probe timing is approximate, and `kubectl` supports a useful subset (`apply`, `get`, `describe`, `delete`, `scale`, `logs`, `exec env`, and a few more).
+
 ## Tests
 
-The tests cover the parts where being wrong would actually teach someone the wrong thing: the lesson engine, each lesson's progression, the controllers, the crash loop backoff and manifest generation. Run them with `npm test`.
+The tests cover the parts where being wrong would actually teach someone the wrong thing: the lesson engine, each lesson's progression, the controllers, the crash loop backoff and manifest generation, and on the Playground side manifest validation, kubectl commands, every lesson's objectives played end to end, and reconciliation. Run them with `npm test`.
 
 ## Status
 
-This is a personal project and still moving. Lessons 1 to 4 are playable from start to finish, lesson 5 and the Playground mode are still to come, and the visuals keep getting polished as I go. Feedback and ideas are welcome through GitHub issues.
+This is a personal project and still moving. Learn lessons 1 to 4 and the eleven Playground lessons are playable from start to finish; Learn lesson 5 and the Playground's Scenarios and Hardcore modes are still to come, and the visuals keep getting polished as I go. Feedback and ideas are welcome through GitHub issues.

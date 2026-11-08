@@ -8,6 +8,8 @@ import { computeGoal } from './cameraGoals';
 
 /** Approximate on-screen width of the inspector panel, including its margin. */
 const INSPECTOR_WIDTH = 396;
+/** Width/height ratio the cluster overview is framed for. */
+const OVERVIEW_ASPECT = 1.6;
 
 const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
@@ -44,13 +46,17 @@ export function CameraRig() {
     () => computeGoal(cluster, view, cameraSelection, transition),
     [cluster, view, cameraSelection?.uid, transition, nonce],
   );
+  // The Playground's canvas sits between docked panels, often narrower than the overview was framed for: pull back to fit.
+  const playground = useAppStore((s) => s.mode === 'playground');
+  const aspect = size.width / Math.max(size.height, 1);
+  const fit = playground && view.kind === 'cluster' && !view.focus ? Math.round(Math.min(Math.max(1, OVERVIEW_ASPECT / aspect), 2.2) * 20) / 20 : 1;
 
   // The cluster changes on every control-loop pass; only a new destination (or a new request) should move the camera.
   const lastFlight = useRef<{ key: string; view: unknown; selection: unknown; transition: unknown; nonce: number } | null>(null);
   useEffect(() => {
     const c = controls.current;
     if (!c) return;
-    const key = JSON.stringify([goal.position, goal.target, goal.pan]);
+    const key = JSON.stringify([goal.position, goal.target, goal.pan, fit]);
     const last = lastFlight.current;
     lastFlight.current = { key, view, selection: cameraSelection?.uid, transition, nonce };
     if (
@@ -72,12 +78,12 @@ export function CameraRig() {
     flight.current = {
       fromPos: camera.position.clone(),
       fromTarget: c.target.clone(),
-      toPos: goal.pan ? toTarget.clone().add(camera.position.clone().sub(c.target)) : new Vector3(...goal.position),
+      toPos: goal.pan ? toTarget.clone().add(camera.position.clone().sub(c.target)) : new Vector3(...goal.position).sub(toTarget).multiplyScalar(fit).add(toTarget),
       toTarget,
       duration: goal.duration,
       t: 0,
     };
-  }, [goal, camera]);
+  }, [goal, camera, fit]);
 
   const pivotRequest = useAppStore((s) => s.pivotRequest);
   useEffect(() => {

@@ -9,7 +9,8 @@ interface Crumb {
   onClick?: () => void;
 }
 
-export function Breadcrumbs() {
+/** `compact` drops the kind labels (still in the tooltips) to fit a one-row title card. */
+export function Breadcrumbs({ compact = false }: { compact?: boolean }) {
   const cluster = useAppStore((s) => s.cluster);
   const view = useAppStore((s) => s.view);
   const selection = useAppStore((s) => s.selection);
@@ -65,7 +66,7 @@ export function Breadcrumbs() {
                 className="hud-btn min-w-14 max-w-[140px] !px-2 !py-1 2xl:max-w-[220px]"
                 title={`${c.kind}: ${c.label}`}
               >
-                <span className="hidden text-[9px] uppercase tracking-widest text-lavender/70 2xl:inline">{c.kind}</span>
+                {!compact && <span className="hidden text-[9px] uppercase tracking-widest text-lavender/70 2xl:inline">{c.kind}</span>}
                 <span className="truncate font-mono text-[11.5px]">{c.label}</span>
               </button>
             ) : (
@@ -74,7 +75,7 @@ export function Breadcrumbs() {
                 aria-current={last ? 'page' : undefined}
                 title={`${c.kind}: ${c.label}`}
               >
-                <span className="text-[9px] uppercase tracking-widest text-cyan/80">{c.kind}</span>
+                {!compact && <span className="text-[9px] uppercase tracking-widest text-cyan/80">{c.kind}</span>}
                 <span className="truncate font-mono text-[11.5px]">{c.label}</span>
               </span>
             )}

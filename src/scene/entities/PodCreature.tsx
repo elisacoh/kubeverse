@@ -134,10 +134,10 @@ function PodCreatureBody({ pod, position, accent, facing = 0, scale = 1 }: Props
   const footColor = useMemo(() => new Color(bodyColor).multiplyScalar(0.6).getStyle(), [bodyColor]);
   const eyeColor = distressed ? conditionColor[condition] : EYE_COLOR;
 
-  // Demo data simulates the loop; live data is only followed, never embellished.
+  // Demo data simulates the loop; live and Playground data are only followed, never embellished.
   const source = useAppStore((s) => s.cluster.source);
   const simulated = source === 'demo' && crashLooping;
-  const tracksLoop = simulated || source === 'live';
+  const tracksLoop = simulated || source !== 'demo';
   const observation = useMemo(() => observeCrashLoop(pod), [pod]);
 
   const seed = useMemo(() => hash(uid), [uid]);

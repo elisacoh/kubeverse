@@ -1,5 +1,6 @@
 import { ArrowLeft, Crosshair, House } from 'lucide-react';
 import { useAppStore } from '../state/useAppStore';
+import { useViewportInsets } from '../state/viewportInsets';
 import { Breadcrumbs } from './Breadcrumbs';
 import { ClusterHealth } from './ClusterHealth';
 import { ModeSelector } from './ModeSelector';
@@ -15,6 +16,7 @@ export function Hud() {
   const recenter = useAppStore((s) => s.recenter);
   const learning = useAppStore((s) => s.mode === 'learn');
   const playground = useAppStore((s) => s.mode === 'playground');
+  const titleSlot = useViewportInsets((s) => (playground ? s.titleSlot : null));
 
   const atRoot = view.kind === 'cluster' && !view.focus && !selection;
   const busy = transition !== null;
@@ -23,17 +25,36 @@ export function Hud() {
     <>
       {/* Top bar */}
       <header className="pointer-events-none fixed inset-x-0 top-0 z-30 flex items-start justify-between gap-3 p-3 sm:p-4">
-        <div className="pointer-events-auto glass flex min-w-0 max-w-[calc(100vw-11rem)] flex-col gap-1 rounded-2xl px-3 py-2 lg:max-w-[calc(50vw-14rem)]">
-          <div className="flex items-center gap-2.5">
+        <div
+          className={
+            titleSlot
+              ? 'pointer-events-auto glass fixed flex h-11 min-w-0 items-center gap-2 rounded-2xl px-3'
+              : 'pointer-events-auto glass flex min-w-0 max-w-[calc(100vw-11rem)] flex-col gap-1 rounded-2xl px-3 py-2 lg:max-w-[calc(50vw-14rem)]'
+          }
+          style={titleSlot ? { top: titleSlot.top, left: titleSlot.left, width: titleSlot.width } : undefined}
+        >
+          <div className="flex shrink-0 items-center gap-2.5">
             <Logo />
             <span className="font-display text-[17px] font-semibold tracking-tight text-white">
               Kube<span className="text-teal">Verse</span>
             </span>
-            <span className="chip !border-warm/30 !text-warm" title="All objects are generated demo data. No real cluster is connected.">
-              DEMO DATA
-            </span>
+            {playground ? (
+              <span className="chip !border-teal/30 !text-teal" title="A Kubernetes cluster simulated in your browser. Nothing runs on a real cluster.">
+                SIMULATED
+              </span>
+            ) : (
+              <span className="chip !border-warm/30 !text-warm" title="All objects are generated demo data. No real cluster is connected.">
+                DEMO DATA
+              </span>
+            )}
           </div>
-          <Breadcrumbs />
+          {titleSlot ? (
+            <div className="ml-auto flex min-w-0 justify-end">
+              <Breadcrumbs compact />
+            </div>
+          ) : (
+            <Breadcrumbs />
+          )}
         </div>
 
         <div className="pointer-events-auto absolute left-1/2 top-3 hidden -translate-x-1/2 sm:top-4 lg:block">

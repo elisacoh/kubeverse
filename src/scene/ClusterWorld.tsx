@@ -9,11 +9,14 @@ import { BuildSites } from './entities/BuildSites';
 import { RequestFlow } from './entities/RequestFlow';
 import { Workloads } from './entities/Workloads';
 import { ControllerFlow } from './entities/ControllerFlow';
+import { PlaygroundObjects } from './entities/PlaygroundObjects';
+import { PlaygroundToy } from './entities/PlaygroundToy';
 
 /** The cluster overview world: control-plane island, worker islands and their links. */
 export function ClusterWorld() {
   const cluster = useAppStore((s) => s.cluster);
   const learning = useAppStore((s) => s.mode === 'learn');
+  const playground = useAppStore((s) => s.mode === 'playground');
   const layouts = useMemo(() => nodeLayouts(cluster), [cluster]);
   // During render, so entities mounting in this same pass already see the pruned set.
   useMemo(
@@ -34,12 +37,14 @@ export function ClusterWorld() {
         );
       })}
       <ApiServerLinks />
-      {/* In Learn mode, ownership is drawn from the controllers themselves (Workloads). */}
-      {!learning && <SiblingThreads />}
+      {/* In Learn and Playground, ownership is drawn from the controllers themselves (Workloads). */}
+      {!learning && !playground && <SiblingThreads />}
       {learning && <BuildSites />}
       {learning && <RequestFlow />}
-      {learning && <Workloads />}
+      {(learning || playground) && <Workloads />}
       {learning && <ControllerFlow />}
+      {playground && <PlaygroundObjects />}
+      {playground && <PlaygroundToy />}
     </group>
   );
 }

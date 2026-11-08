@@ -72,7 +72,7 @@ interface AppState {
   selectComponent: (uid: string) => void;
   selectContainer: (podUid: string, name: string) => void;
   selectAgent: (nodeName: string, agent: NodeAgent) => void;
-  /** Select a workload; in Learn mode the camera moves to the cluster view and frames it. */
+  /** Select a workload; in Learn and Playground the camera moves to the cluster view and frames it. */
   selectWorkload: (uid: string) => void;
   /** Update what the scene reveals without swapping the world. */
   setPresentation: (presentation: ScenePresentation) => void;
@@ -117,7 +117,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
   cameraNonce: 0,
   pivotRequest: null,
 
-  // The Playground teaser covers the world, so nothing should stay selected behind it.
+  // Each mode shows its own world, so a selection never carries over into the Playground.
   setMode: (mode) => set(mode === 'playground' ? { mode, selection: null } : { mode }),
 
   loadWorld: (cluster, presentation) => set({ cluster, presentation, hoveredId: null }),
@@ -171,8 +171,9 @@ export const useAppStore = create<AppState>()((set, get) => ({
     }
     const view = get().view;
     const keepCloseUp = view.kind === 'node' && view.closeUp === uid;
-    // A controller's unscheduled Pod waits beside its ReplicaSet, which only the cluster view shows.
-    const waitsByOwner = !pod.nodeName && controllerRef(pod) !== undefined && get().mode === 'learn';
+    // An unscheduled Pod waits beside its ReplicaSet (or, in the Playground, at the standalone anchor): only the cluster view shows it.
+    const mode = get().mode;
+    const waitsByOwner = !pod.nodeName && ((controllerRef(pod) !== undefined && mode === 'learn') || mode === 'playground');
     set({
       pick: pick('pod', uid),
       selection: { kind: 'pod', uid },
@@ -213,8 +214,8 @@ export const useAppStore = create<AppState>()((set, get) => ({
 
   selectWorkload: (uid) => {
     if (!get().cluster.workloads.some((w) => w.metadata.uid === uid)) return;
-    // Only Learn mode draws controllers in the world; elsewhere the camera stays put.
-    const stay = get().mode !== 'learn' || get().view.kind === 'pod' || get().transition !== null;
+    // Explore does not draw controllers in the world, so there the camera stays put.
+    const stay = get().mode === 'explore' || get().view.kind === 'pod' || get().transition !== null;
     set({
       selection: { kind: 'workload', uid },
       pick: pick('workload', uid),

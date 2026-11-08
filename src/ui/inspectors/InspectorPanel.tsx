@@ -15,6 +15,7 @@ export function InspectorPanel() {
   const view = useAppStore((s) => s.view);
   const selection = useAppStore((s) => s.selection);
   const cluster = useAppStore((s) => s.cluster);
+  const playground = useAppStore((s) => s.mode === 'playground');
   // Kept across selections so the learner can browse manifests object by object.
   const [tab, setTab] = useState<InspectorTab>('details');
 
@@ -46,7 +47,9 @@ export function InspectorPanel() {
     target = { kind: 'node', name: view.nodeName };
   }
 
-  const manifest = target ? buildManifest(cluster, target) : null;
+  // The Playground has its own object details (My Cluster) where this panel would sit.
+  if (playground) content = null;
+  const manifest = content && target ? buildManifest(cluster, target) : null;
 
   // Keep the last content mounted while sliding out.
   const last = useRef<{ key: string; content: ReactNode; manifest: Manifest | null }>({

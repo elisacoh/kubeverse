@@ -7,7 +7,7 @@ import { controllerRef, findPod, findWorkload, podsControlledBy, workloadsContro
 import { useAppStore } from '../../state/useAppStore';
 import { conditionColor, palette } from '../palette';
 import { podAccent, workloadAccent } from '../accent';
-import { componentSlots, nodeLayouts, pendingPodPositions, podWorldPosition, workloadPositions, type Vec3 } from '../layout';
+import { componentSlots, nodeLayouts, pendingPodPositions, podWorldPosition, standaloneReplicaSets, workloadPositions, type Vec3 } from '../layout';
 import { useHoverHandlers, useIsHovered } from '../interaction';
 import { useLearningHighlight } from '../useLearningHighlight';
 import { WorldLabel } from '../WorldLabel';
@@ -39,11 +39,17 @@ export function Workloads() {
     return result;
   }, [cluster, pending]);
   const deployments = cluster.workloads.filter((w): w is Deployment => w.kind === 'Deployment');
-  if (deployments.length === 0) return null;
+  const standalone = standaloneReplicaSets(cluster) as ReplicaSet[];
+  const first = deployments[0] ?? standalone[0];
+  if (!first && pending.size === 0) return null;
 
   return (
     <group>
-      <ControllerManagerLink cluster={cluster} to={positions.get(deployments[0]!.metadata.uid)} />
+      {first && <ControllerManagerLink cluster={cluster} to={positions.get(first.metadata.uid)} />}
+      {standalone.map((rs) => {
+        const rsPos = positions.get(rs.metadata.uid);
+        return rsPos ? <ReplicaSetEmblem key={rs.metadata.uid} cluster={cluster} replicaSet={rs} position={rsPos} accent={workloadAccent(cluster, rs)} /> : null;
+      })}
       {deployments.map((d) => {
         const pos = positions.get(d.metadata.uid);
         if (!pos) return null;
