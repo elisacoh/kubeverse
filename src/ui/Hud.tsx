@@ -17,7 +17,8 @@ export function Hud() {
   const learning = useAppStore((s) => s.mode === 'learn');
   const playground = useAppStore((s) => s.mode === 'playground');
   const titleSlot = useViewportInsets((s) => (playground ? s.titleSlot : null));
-
+  // Between the Playground's docked panels, the mode selector sits over the world.
+  const worldInsets = useViewportInsets((s) => (titleSlot ? s.insets : null));
   const atRoot = view.kind === 'cluster' && !view.focus && !selection;
   const busy = transition !== null;
 
@@ -57,7 +58,10 @@ export function Hud() {
           )}
         </div>
 
-        <div className="pointer-events-auto absolute left-1/2 top-3 hidden -translate-x-1/2 sm:top-4 lg:block">
+        <div
+          className="pointer-events-auto absolute left-1/2 top-3 hidden -translate-x-1/2 sm:top-4 lg:block"
+          style={worldInsets ? { left: `calc(${worldInsets.left}px + (100vw - ${worldInsets.left + worldInsets.right}px) / 2)` } : undefined}
+        >
           <ModeSelector />
         </div>
 
@@ -92,8 +96,8 @@ export function Hud() {
         </div>
         <p className="pointer-events-none hidden text-[11px] text-lavender/55 lg:block">
           {learning
-            ? 'Drag to orbit · Double-click empty space to move there · Scroll to zoom · Esc to go back'
-            : 'Drag to orbit · Double-click empty space to move there · Scroll to zoom · Double-click a Pod to step inside · Esc to go back'}
+            ? 'Drag to orbit · Right-click to centre there · Scroll to zoom · Esc to go back'
+            : 'Drag to orbit · Right-click to centre there · Scroll to zoom · Double-click a Pod to step inside · Esc to go back'}
         </p>
       </div>
 

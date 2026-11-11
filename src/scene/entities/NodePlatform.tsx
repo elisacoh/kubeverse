@@ -120,6 +120,7 @@ export function NodePlatform({ node, layout, index }: Props) {
       <WorldLabel
         position={[Math.sin(outward) * labelDist, PLATFORM_TOP - 0.25, Math.cos(outward) * labelDist]}
         center
+        behind
       >
         <button
           type="button"

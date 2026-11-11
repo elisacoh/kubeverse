@@ -289,16 +289,30 @@ const createObject = (d: Draft, desired: DesiredObject): KObject => {
   }
 };
 
-const withoutImages = (spec: PodSpec) => stableStringify({ ...spec, containers: spec.containers.map((c) => ({ ...c, image: '' })) });
+const withoutImages = (spec: PodSpec): PodSpec => ({ ...spec, containers: spec.containers.map((c) => ({ ...c, image: '' })) });
+
+/** Paths where two plain values differ, e.g. `spec.containers[0].name`. */
+export const differingPaths = (a: unknown, b: unknown, path = ''): string[] => {
+  if (stableStringify(a) === stableStringify(b)) return [];
+  if (Array.isArray(a) && Array.isArray(b) && a.length === b.length) return a.flatMap((x, i) => differingPaths(x, b[i], `${path}[${i}]`));
+  const isMap = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+  if (isMap(a) && isMap(b)) {
+    const keys = [...new Set([...Object.keys(a), ...Object.keys(b)])];
+    return keys.flatMap((k) => differingPaths(a[k], b[k], path ? `${path}.${k}` : k));
+  }
+  return [path];
+};
 
 /** Why the API server would refuse this update, or null. */
 const updateError = (existing: KObject, desired: DesiredObject): { error: string; hint?: string } | null => {
   const name = existing.metadata.name;
   if (existing.kind === 'Pod' && desired.kind === 'Pod') {
-    if (withoutImages(existing.spec) !== withoutImages(desired.spec)) {
+    const changed = differingPaths(withoutImages(existing.spec), withoutImages(desired.spec), 'spec');
+    if (changed.length) {
+      const list = changed.slice(0, 4).map((p) => `\`${p}\``).join(', ') + (changed.length > 4 ? '…' : '');
       return {
         error: `The Pod "${name}" is invalid: spec: Forbidden: pod updates may not change fields other than \`spec.containers[*].image\`, \`spec.initContainers[*].image\`, \`spec.activeDeadlineSeconds\`, \`spec.tolerations\` (only additions to existing tolerations), \`spec.terminationGracePeriodSeconds\``,
-        hint: `A running Pod's spec is mostly immutable. Delete it first (kubectl delete pod ${name}), then apply again. Controllers like Deployments do exactly this for you.`,
+        hint: `Labels and other metadata can change, but this file also changes the running Pod's spec: ${list}. Make those match the Pod (see \`kubectl get pod ${name} -o yaml\`), or delete it first (\`kubectl delete pod ${name}\`) and apply again. Controllers like Deployments replace Pods for you.`,
       };
     }
   }

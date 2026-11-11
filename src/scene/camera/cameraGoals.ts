@@ -40,20 +40,28 @@ const horizontalDir = (p: Vec3): [number, number] => {
 };
 
 /**
- * Moves the view to a controller or a Pod without zooming: the learner keeps the distance they chose.
+ * Moves the view to a controller, a Pod or a point. Without `zoom` the learner keeps the distance they chose.
  * A Deployment is aimed between itself and its ReplicaSets, so both stay in view.
  */
 const focusGoal = (cluster: Cluster, focus: CameraFocus): CameraGoal | undefined => {
   let target: Vec3 | undefined;
-  if (focus.kind === 'workload') {
+  let distance = 5;
+  if (focus.kind === 'spot') {
+    target = focus.position;
+  } else if (focus.kind === 'workload') {
     const p = workloadPositions(cluster).get(focus.uid);
     const w = cluster.workloads.find((x) => x.metadata.uid === focus.uid);
     if (p && w) target = [p[0], p[1] - (w.kind === 'Deployment' ? 1.5 : 0.7), p[2]];
+    distance = w?.kind === 'Deployment' ? 9 : 7;
   } else {
     const p = podWorldPosition(cluster, focus.uid);
     if (p) target = [p[0], p[1] + 0.6, p[2]];
+    distance = 4;
   }
-  return target && { target, position: target, duration: 1.2, pan: true };
+  if (!target) return undefined;
+  if (!focus.zoom) return { target, position: target, duration: 1.2, pan: true };
+  const [dx, dz] = horizontalDir(target);
+  return { target, position: [target[0] + dx * distance * 0.55, target[1] + distance * 0.5, target[2] + dz * distance * 0.55 + distance * 0.6], duration: 1.3 };
 };
 
 export const computeGoal = (

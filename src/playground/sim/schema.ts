@@ -351,6 +351,7 @@ const labelSelector = (owner: 'ReplicaSet' | 'Deployment'): Field =>
         values: 'A map of label keys to values.',
         how: 'Every key/value here must appear in `spec.template.metadata.labels`, otherwise the API server rejects the manifest.',
         example: 'matchLabels:\n  app: web',
+        details: 'Real Kubernetes also accepts `matchExpressions` next to it: rules with an operator (`In`, `NotIn`, `Exists`, `DoesNotExist`), such as `{key: tier, operator: In, values: [frontend, backend]}`. The Playground simulates `matchLabels` only.',
       }, true),
     }),
     selectorDoc(owner),

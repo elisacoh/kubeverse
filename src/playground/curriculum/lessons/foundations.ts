@@ -468,6 +468,7 @@ export const labels: Lesson = {
         file: 'pod.yaml',
         kind: 'Pod',
         objective: 'hello-pod carries at least two labels, including `app: hello`.',
+        carryFrom: { lesson: 'first-pod', step: 'write' },
         checks: [
           equals('kind', 'Pod', '`kind` is Pod'),
           equals('metadata.name', 'hello-pod', 'still named hello-pod'),
@@ -634,6 +635,23 @@ export const replicaSet: Lesson = {
           ],
           code: 'spec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: web\n  template:\n    metadata:\n      labels:\n        app: web\n    spec:\n      containers:\n        - name: nginx\n          image: nginx:stable',
           more: 'Pods created by a ReplicaSet are named after it plus a random suffix, and carry an ownerReference pointing to it. That ownership is what lets Kubernetes delete the Pods when you delete the ReplicaSet. A ReplicaSet also adopts existing Pods without an owner that match its selector, which is one more reason to keep selectors specific.',
+        },
+        {
+          title: 'selector and matchLabels',
+          body: [
+            '`selector` answers one question: which Pods belong to this ReplicaSet? It never looks at names, only at labels.',
+            '`matchLabels` is the simple form: a mapping of labels a Pod must carry, **all of them**. `app: web` selects every Pod labelled `app: web`, whatever its other labels. Add `tier: frontend` and a Pod needs both.',
+          ],
+          code: 'selector:\n  matchLabels:\n    app: web\n    tier: frontend   # a Pod needs both labels',
+          more: [
+            'matchLabels can only say "this key equals this value". For anything else, a selector has a second form, `matchExpressions`: a list of rules, each with a `key`, an `operator` and, depending on the operator, a list of `values`.',
+            'The four operators: `In` (the label\'s value is one of `values`), `NotIn` (the label is missing, or its value is not one of them), `Exists` (the Pod has this key, whatever its value, with no `values`) and `DoesNotExist` (it does not have this key).',
+            'You can use both forms in the same selector: every matchLabels entry **and** every expression must hold. In fact `matchLabels: {app: web}` is shorthand for the expression `{key: app, operator: In, values: [web]}`.',
+            'The same set-based rules exist on the command line: `kubectl get pods -l \'tier in (frontend, backend)\'`, `-l \'!canary\'` (no `canary` label) or `-l env` (has an `env` label).',
+            'Two cautions. A ReplicaSet\'s selector cannot be changed after creation, so choose it carefully. And the template\'s labels must satisfy the whole selector, expressions included, or the API server rejects the manifest.',
+            'The Playground simulates `matchLabels` only: writing `matchExpressions` here is reported as an unknown field, but it is valid on a real cluster.',
+          ],
+          moreCode: 'selector:\n  matchLabels:\n    app: web\n  matchExpressions:\n    - key: tier\n      operator: In\n      values: [frontend, backend]\n    - key: canary\n      operator: DoesNotExist',
         },
       ],
     },

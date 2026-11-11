@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -44,6 +44,11 @@ export function LessonPanel({ lesson }: { lesson: Lesson }) {
   const doneCount = lesson.steps.filter((s) => progress.done.includes(s.id)).length;
   const complete = !!progress.completedAt;
   const last = index === lesson.steps.length - 1;
+  const body = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    body.current?.scrollTo({ top: 0 });
+  }, [lesson.id, index]);
 
   return (
     <div className="glass flex h-full min-h-0 flex-col overflow-hidden rounded-2xl">
@@ -98,7 +103,7 @@ export function LessonPanel({ lesson }: { lesson: Lesson }) {
         </ol>
       </div>
 
-      <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto px-3 py-3">
+      <div ref={body} className="scrollbar-thin min-h-0 flex-1 overflow-y-auto px-3 py-3">
         <StartingPoint lesson={lesson} />
         {lesson.simulationNotes && <SimulationNotes notes={lesson.simulationNotes} />}
 

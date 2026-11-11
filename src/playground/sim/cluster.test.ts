@@ -97,7 +97,10 @@ describe('Pod lifecycle', () => {
     const changed = readManifests(POD.replace('image: nginx:stable', 'image: nginx:stable\n      ports:\n        - containerPort: 80')).objects[0]!.desired;
     const r = applyObject(s, changed);
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.error).toMatch(/Forbidden: pod updates may not change fields/);
+    if (!r.ok) {
+      expect(r.error).toMatch(/Forbidden: pod updates may not change fields/);
+      expect(r.hint).toMatch(/`spec\.containers\[0\]\.ports`/);
+    }
   });
 
   it('a deleted Pod terminates, then disappears, and nothing recreates it', () => {

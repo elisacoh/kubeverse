@@ -7,8 +7,11 @@ import { FULL_PRESENTATION, type NodeAgent, type ScenePresentation } from './pre
 export type AppMode = 'explore' | 'learn' | 'playground';
 
 /** Where the camera is and which world is rendered. */
-/** Something in the cluster view the camera frames closely: a controller emblem, or a Pod still waiting for a Node. */
-export type CameraFocus = { kind: 'workload' | 'pod'; uid: string };
+/**
+ * Something in the cluster view the camera moves to: a controller emblem, a Pod still waiting for a Node,
+ * or a point such as a Playground shelf glyph. `zoom` flies in close instead of keeping the current distance.
+ */
+export type CameraFocus = ({ kind: 'workload' | 'pod'; uid: string } | { kind: 'spot'; position: [number, number, number] }) & { zoom?: boolean };
 
 export type View =
   | { kind: 'cluster'; focus?: CameraFocus }

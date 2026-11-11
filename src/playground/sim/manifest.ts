@@ -162,6 +162,11 @@ interface Missing {
 
 type Push = (path: Path, message: string, hint?: string, key?: boolean, missing?: Missing) => void;
 
+/** Real Kubernetes fields the Playground does not simulate, with a hint instead of a typo suggestion. */
+const NOT_SIMULATED: Record<string, string> = {
+  matchExpressions: '`matchExpressions` is valid on a real cluster, but the Playground simulates `matchLabels` only. Use `matchLabels` here.',
+};
+
 const FORMAT_CHECKS: Partial<Record<StringFormat, (v: string) => string | null>> = {
   cpu: (v) => (parseCpu(v) === null ? `quantities must match the regular expression for CPU, e.g. "500m" or "1"` : null),
   memory: (v) => (parseMemory(v) === null ? 'quantities must be a number with an optional suffix such as Mi or Gi, e.g. "128Mi"' : null),
@@ -182,7 +187,7 @@ const walk = (node: SchemaNode, value: unknown, path: Path, push: Push) => {
           push(
             [...path, k],
             `unknown field "${k}" in ${node.name}`,
-            suggestion ? `Did you mean "${suggestion}"?` : `Fields allowed here: ${Object.keys(node.fields).join(', ')}.`,
+            NOT_SIMULATED[k] ?? (suggestion ? `Did you mean "${suggestion}"?` : `Fields allowed here: ${Object.keys(node.fields).join(', ')}.`),
             true,
           );
           continue;

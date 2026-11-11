@@ -73,6 +73,8 @@ export interface Exercise {
   solutionNotes: { field: string; note: string }[];
   /** Not a Kubernetes object: once the step is done, applying the file brings this toy to life in the world, for fun. */
   toy?: 'cat';
+  /** Guided mode starts from the learner's own finished file from this earlier write step, while it is still valid. */
+  carryFrom?: { lesson: LessonId; step: string };
 }
 
 export interface CommandRecord {

@@ -110,7 +110,7 @@ export function ControlPlaneIsland({ node, layout }: Props) {
           );
         })}
 
-        <WorldLabel position={[0, -0.2 - ROCK_DEPTH - 0.6, 0]} center>
+        <WorldLabel position={[0, -0.2 - ROCK_DEPTH - 0.6, 0]} center behind>
           <button
             type="button"
             className={`kv-nameplate ${focused ? 'is-active' : ''}`}

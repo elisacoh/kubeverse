@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, CheckCircle2, ChevronDown, Circle, Eye, FileInput, Lightbulb, ListChecks, Sparkles, XCircle } from 'lucide-react';
 import { validateExercise, type ExerciseValidation } from '../../playground/curriculum/checks';
 import { modeOf } from '../../playground/curriculum/progress';
@@ -38,6 +38,16 @@ export function WriteStepView({ step, lessonId }: { step: WriteStep; lessonId: s
     [ex, deferred, mode, gIndex, typingLine],
   );
   const current = mode === 'guided' && guided.length && !done ? guided[gIndex] : undefined;
+  const guidedTop = useRef<HTMLDivElement>(null);
+  const shownStep = useRef(gIndex);
+
+  useEffect(() => {
+    if (shownStep.current === gIndex) return;
+    shownStep.current = gIndex;
+    const el = guidedTop.current;
+    const box = el?.closest<HTMLElement>('.overflow-y-auto');
+    if (el && box) box.scrollTo({ top: box.scrollTop + el.getBoundingClientRect().top - box.getBoundingClientRect().top - 12, behavior: 'smooth' });
+  }, [gIndex]);
 
   const onCheck = () => {
     const r = checkWrite(step.id);
@@ -91,7 +101,7 @@ export function WriteStepView({ step, lessonId }: { step: WriteStep; lessonId: s
       )}
 
       {mode === 'guided' && guided.length > 0 && (
-        <div className="flex items-center gap-1" aria-label="Guided steps">
+        <div ref={guidedTop} className="flex items-center gap-1" aria-label="Guided steps">
           {guided.map((s, i) => (
             <span key={s.title} title={s.title} className={`h-1 flex-1 rounded-full ${i < g || done ? 'bg-teal' : i === gIndex ? 'bg-cyan/60' : 'bg-white/10'}`} />
           ))}

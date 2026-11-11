@@ -25,6 +25,19 @@ const SHELF_SPACING = 2.6;
 
 const isShelved = (o: KObject): o is Shelved => o.kind in COLUMNS;
 
+/** Where each shelved object sits, by uid. */
+export const shelfPositions = (objects: readonly KObject[]): Map<string, Vec3> => {
+  const counts: Record<string, number> = {};
+  const out = new Map<string, Vec3>();
+  for (const o of objects) {
+    if (!isShelved(o)) continue;
+    const i = counts[o.kind] ?? 0;
+    counts[o.kind] = i + 1;
+    out.set(o.metadata.uid, [COLUMNS[o.kind].x, SHELF_Y, SHELF_Z + i * SHELF_SPACING]);
+  }
+  return out;
+};
+
 /** Pods (by uid) an object relates to: a Service's endpoints, Pods reading a ConfigMap or mounting a claim. */
 const relatedPods = (s: SimState, o: Shelved): string[] => {
   const pods = s.objects.filter((p) => p.kind === 'Pod' && !isDeleting(p));
@@ -67,12 +80,8 @@ export function PlaygroundObjects() {
   const universe = useAppStore((s) => s.cluster.nodes.length === 0);
   const shelved = useMemo(() => (universe ? [] : sim.objects.filter(isShelved)), [sim, universe]);
   const placed = useMemo(() => {
-    const counts: Record<string, number> = {};
-    return shelved.map((o) => {
-      const i = counts[o.kind] ?? 0;
-      counts[o.kind] = i + 1;
-      return { o, position: [COLUMNS[o.kind].x, SHELF_Y, SHELF_Z + i * SHELF_SPACING] as Vec3 };
-    });
+    const positions = shelfPositions(shelved);
+    return shelved.map((o) => ({ o, position: positions.get(o.metadata.uid)! }));
   }, [shelved]);
   return (
     <group>
@@ -153,7 +162,7 @@ function Glyph({ object: o, position, sim }: { object: Shelved; position: Vec3; 
             <meshBasicMaterial />
           </mesh>
         </group>
-        <WorldLabel position={[0, 0.9, 0]} center>
+        <WorldLabel position={[0, 0.9, 0]} center behind>
           <button type="button" className={`kv-nameplate ${selected ? 'is-active' : ''}`} style={{ ['--accent' as string]: color }} onClick={() => select(selected ? null : ref)}>
             <span className="kv-nameplate-kind">
               {label} · {subtitle(sim, o)}

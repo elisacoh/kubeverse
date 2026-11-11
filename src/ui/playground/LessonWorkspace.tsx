@@ -17,6 +17,8 @@ const TITLE_HEIGHT = 44;
 const HEADER = GAP + TITLE_HEIGHT + GAP;
 /** Below the HUD's regular two-row title card. */
 const HEADER_NARROW = 92;
+/** Room the centred mode selector needs over the world, so the right column can rise to the top. */
+const MODE_SELECTOR_ROOM = 360;
 const COLLAPSED_LESSON = 44;
 const BUTTON_GUTTER = 44;
 const MY_CLUSTER_BAR = 44;
@@ -64,8 +66,8 @@ export function LessonWorkspace({ lesson }: { lesson: Lesson }) {
   const [lessonOpen, setLessonOpen] = useState(true);
   const [lessonExpanded, setLessonExpanded] = useState(false);
   const [clusterOpen, setClusterOpen] = useState(true);
-  const [left, setLeft] = useStoredSize('kv.pg.left', 370, 300, Math.min(560, w * 0.34));
-  const [right, setRight] = useStoredSize('kv.pg.right', Math.round(Math.min(560, w * 0.36)), 360, w * 0.5);
+  const [left, setLeft] = useStoredSize('kv.pg.left.v2', 370, 300, Math.min(560, w * 0.34));
+  const [right, setRight] = useStoredSize('kv.pg.right.v2', Math.round(Math.min(560, w * 0.36)), 360, w * 0.5);
   const [terminal, setTerminal] = useStoredSize('kv.pg.terminal', 260, 140, h - HEADER - 260);
   const [clusterHeight, setClusterHeight] = useStoredSize('kv.pg.cluster', 240, 120, h * 0.5);
   const [tab, setTab] = useState<'lesson' | 'editor' | 'terminal' | 'cluster' | 'world'>('lesson');
@@ -75,6 +77,8 @@ export function LessonWorkspace({ lesson }: { lesson: Lesson }) {
   // Expanded, the lesson covers the world up to the editor, leaving a gutter for its buttons.
   const panelWidth = expanded ? Math.max(left, w - right - GAP * 3 - BUTTON_GUTTER) : leftWidth;
   const bottom = clusterOpen ? clusterHeight + GAP : MY_CLUSTER_BAR + GAP;
+  const worldWidth = w - (GAP + leftWidth + GAP) - (GAP + right + GAP);
+  const rightTop = worldWidth >= MODE_SELECTOR_ROOM ? GAP : HEADER;
 
   useEffect(() => {
     if (wide) setInsets({ top: 0, left: GAP + leftWidth + GAP, right: GAP + right + GAP, bottom: bottom + GAP });
@@ -169,7 +173,7 @@ export function LessonWorkspace({ lesson }: { lesson: Lesson }) {
         <MyCluster collapsed={!clusterOpen} onToggle={() => setClusterOpen((o) => !o)} />
       </div>
 
-      <div className="fixed z-20 flex flex-col" style={{ top: HEADER, bottom: GAP, right: GAP, width: right }}>
+      <div className="fixed z-20 flex flex-col" style={{ top: rightTop, bottom: GAP, right: GAP, width: right }}>
         <div className="absolute inset-y-0 -left-2.5">
           <Splitter axis="x" size={right} onSize={setRight} invert label="Resize the editor and terminal" />
         </div>

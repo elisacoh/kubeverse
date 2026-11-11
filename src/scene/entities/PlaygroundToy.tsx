@@ -9,9 +9,8 @@ import { useHoverHandlers } from '../interaction';
 import { WorldLabel } from '../WorldLabel';
 import { accentFor, palette } from '../palette';
 
-/** Where the cat sits: centre stage in an empty universe, beside the control plane otherwise. */
+/** Centre stage in L00's empty universe. */
 const IN_UNIVERSE: Vec3 = [0, 0.4, -3.5];
-const BESIDE_CLUSTER: Vec3 = [11, 3.4, -2];
 
 const show = (v: unknown): string =>
   Array.isArray(v)
@@ -27,12 +26,12 @@ const furOf = (fields: Record<string, unknown>) => {
 
 const easeOutBack = (t: number) => 1 + 2.70158 * Math.pow(t - 1, 3) + 1.70158 * Math.pow(t - 1, 2);
 
-/** L00's pet.yaml, applied for fun: a little cat wearing the learner's fields. */
+/** L00's pet.yaml, applied for fun: a little cat wearing the learner's fields. It lives only in L00's empty universe. */
 export function PlaygroundToy() {
   const toy = usePlayground((s) => s.toy);
   const universe = useAppStore((s) => s.cluster.nodes.length === 0);
-  if (!toy || toy.kind !== 'cat') return null;
-  return <Cat key={toy.seq} toy={toy} position={universe ? IN_UNIVERSE : BESIDE_CLUSTER} size={universe ? 2.4 : 1.3} />;
+  if (!toy || toy.kind !== 'cat' || !universe) return null;
+  return <Cat key={toy.seq} toy={toy} position={IN_UNIVERSE} size={2.4} />;
 }
 
 function Cat({ toy, position, size }: { toy: Toy; position: Vec3; size: number }) {

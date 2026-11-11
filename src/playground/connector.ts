@@ -1,4 +1,6 @@
 import type { Cluster } from '../domain/types';
+import { findPod } from '../domain/selectors';
+import { shelfPositions } from '../scene/entities/PlaygroundObjects';
 import { useAppStore } from '../state/useAppStore';
 import { lessonById } from './curriculum';
 import { FULL_PRESENTATION, type ScenePresentation } from '../state/presentation';
@@ -19,19 +21,31 @@ const sameRef = (a: ResourceRef | null, b: ResourceRef | null) => a?.kind === b?
 const refOf = (o: KObject): ResourceRef => ({ kind: o.kind, name: o.metadata.name, namespace: o.metadata.namespace });
 
 /**
- * Shows an object in the 3D world: Pods and controllers are selected and
- * framed; objects without a native form (Services, ConfigMaps, claims) are
- * highlighted on their shelf, seen from the cluster overview.
+ * Shows an object in the 3D world: the camera zooms in on it. Pods and controllers are
+ * also selected; objects without a native form (Services, ConfigMaps, claims) are
+ * framed on their shelf.
  */
 export const locate = (ref: ResourceRef) => {
   const app = useAppStore.getState();
-  const o = usePlayground.getState().sim.objects.find((x) => x.kind === ref.kind && x.metadata.name === ref.name && x.metadata.namespace === ref.namespace);
+  const objects = usePlayground.getState().sim.objects;
+  const o = objects.find((x) => x.kind === ref.kind && x.metadata.name === ref.name && x.metadata.namespace === ref.namespace);
   if (!o) return;
-  if (o.kind === 'Pod') app.selectPod(o.metadata.uid);
-  else if (o.kind === 'Deployment' || o.kind === 'ReplicaSet') app.selectWorkload(o.metadata.uid);
-  else {
+  const uid = o.metadata.uid;
+  // Inside a Pod's anatomy view the camera stays put; selecting is enough.
+  const canMove = app.view.kind !== 'pod' && app.transition === null;
+  if (o.kind === 'Pod') {
+    app.selectPod(uid);
+    if (!canMove) return;
+    const nodeName = findPod(useAppStore.getState().cluster, uid)?.nodeName;
+    useAppStore.setState({ view: nodeName ? { kind: 'node', nodeName, closeUp: uid } : { kind: 'cluster', focus: { kind: 'pod', uid, zoom: true } } });
+  } else if (o.kind === 'Deployment' || o.kind === 'ReplicaSet') {
+    app.selectWorkload(uid);
+    if (canMove) useAppStore.setState({ view: { kind: 'cluster', focus: { kind: 'workload', uid, zoom: true } } });
+  } else {
     app.clearSelection();
+    const position = shelfPositions(objects).get(uid);
     if (app.view.kind === 'pod') app.exitPod('cluster');
+    else if (canMove && position) useAppStore.setState({ view: { kind: 'cluster', focus: { kind: 'spot', position, zoom: true } } });
     else app.applyScenario({ view: { kind: 'cluster' }, selection: null });
   }
 };

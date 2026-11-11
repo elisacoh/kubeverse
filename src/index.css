@@ -223,6 +223,27 @@ body,
     background: rgb(14 22 52 / 0.9);
     transform: translateY(-1px);
   }
+  .kv-behind {
+    transform: scale(var(--label-scale, 1));
+  }
+  .kv-behind:hover {
+    transform: scale(max(var(--label-scale, 1), 0.75));
+  }
+  .kv-behind .kv-nameplate {
+    opacity: 0.45;
+    transition:
+      opacity 250ms,
+      border-color 150ms,
+      background 150ms,
+      transform 150ms;
+  }
+  .kv-behind[data-behind='true'] .kv-nameplate {
+    opacity: 0.1;
+  }
+  .kv-behind .kv-nameplate:hover,
+  .kv-behind .kv-nameplate.is-active {
+    opacity: 1;
+  }
   .kv-nameplate-kind {
     font: 500 9px var(--font-sans);
     letter-spacing: 0.14em;

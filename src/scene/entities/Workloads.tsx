@@ -189,7 +189,7 @@ function DeploymentEmblem({ deployment: d, position, accent }: { deployment: Dep
             <meshBasicMaterial color={accent} transparent opacity={0.07} depthWrite={false} blending={AdditiveBlending} />
           </mesh>
         )}
-        <WorldLabel position={[0, 1.05, 0]} center>
+        <WorldLabel position={[0, 1.05, 0]} center behind>
           <button
             type="button"
             className={`kv-nameplate ${selected ? 'is-active' : ''}`}
@@ -260,7 +260,7 @@ function ReplicaSetEmblem({
           <meshBasicMaterial />
         </mesh>
       </group>
-      <WorldLabel position={[0, 0.75, 0]} center>
+      <WorldLabel position={[0, 0.75, 0]} center behind>
         <button
           type="button"
           className={`kv-nameplate ${selected ? 'is-active' : ''}`}

@@ -21,6 +21,15 @@ describe('judgeWhileTyping', () => {
     expect(typing.objectives.find((o) => o.id === 'age-number')?.ok).toBe(false);
   });
 
+  it('does not read a half-typed nested key as the parent\'s text value', () => {
+    const rs = lessonById('replicaset')!.steps.find((s): s is WriteStep => s.kind === 'write')!.exercise;
+    const text = 'apiVersion: apps/v1\nkind: ReplicaSet\nmetadata:\n  name: web\nspec:\n  template:\n    spec:\n      containers';
+    const schema = (line: number | null) =>
+      judgeWhileTyping(text, line, (t) => validateExercise(rs, t, 'scratch', 0), (r) => r.syntax.map((i) => i.line)).schema.filter((i) => !i.pending);
+    expect(schema(null).some((i) => /got the text "containers"/.test(i.message))).toBe(true);
+    expect(schema(8).some((i) => /got the text "containers"/.test(i.message))).toBe(false);
+  });
+
   it('still reports errors on other lines', () => {
     expect(judge('name: Mochi\nage\nowner:\n  city: Lisbon', 4).syntax.length).toBeGreaterThan(0);
   });

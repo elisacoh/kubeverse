@@ -12,7 +12,7 @@ import {
   type LessonProgress,
   type ProgressMap,
 } from './curriculum/progress';
-import type { CommandRecord, ExerciseMode, Lesson, LessonId, WriteStep } from './curriculum/types';
+import type { CommandRecord, Exercise, ExerciseMode, Lesson, LessonId, WriteStep } from './curriculum/types';
 import { runCommand, type OutputLine } from './kubectl/run';
 import { SimulatedCluster } from './sim/backend';
 import type { Kind, SimState } from './sim/types';
@@ -159,10 +159,20 @@ export const usePlayground = create<PlaygroundState>()((set, get) => {
     set({ celebrate: { stepId, seq: ++celebrateSeq } });
   };
 
+  /** The learner's finished, still valid file from the earlier write step an exercise carries on from. */
+  const carried = (ex: Exercise): string | undefined => {
+    const src = lessonById(ex.carryFrom?.lesson);
+    const from = writeStep(src, ex.carryFrom?.step ?? '');
+    if (!src || !from || !get().progress[src.id]?.done.includes(from.id)) return undefined;
+    const used = modeOf(get().progress[src.id], from);
+    const modes: ExerciseMode[] = [used, ...(['guided', 'complete', 'scratch'] as const).filter((m) => m !== used)];
+    return modes.map((m) => get().drafts[draftKey(src.id, from.id, m)]).find((t) => t !== undefined && validateExercise(from.exercise, t, 'scratch', 0).passed);
+  };
+
   /** Puts the exercise text for the current mode in the editor (the saved draft, else the starter). */
   const loadExercise = (l: Lesson, step: WriteStep) => {
     const mode = modeOf(get().progress[l.id], step);
-    const text = get().drafts[draftKey(l.id, step.id, mode)] ?? starterFor(step.exercise, mode);
+    const text = get().drafts[draftKey(l.id, step.id, mode)] ?? (mode === 'guided' ? carried(step.exercise) : undefined) ?? starterFor(step.exercise, mode);
     set((s) => ({ files: { ...s.files, [step.exercise.file]: text }, activeFile: step.exercise.file }));
   };
 
@@ -203,8 +213,15 @@ export const usePlayground = create<PlaygroundState>()((set, get) => {
       items.push(...a.objects.map((o) => `${o} (${lessonCode(a.from)})`));
     }
     if (l.setup && setupNeeded()) {
-      set((s) => ({ files: { ...s.files, ...l.setup!.files } }));
-      for (const c of l.setup.commands) await get().run(c, 'setup');
+      // Recreate what the learner wrote earlier, so the cluster matches the file the lesson starts from.
+      const files = { ...l.setup.files };
+      for (const s of l.steps) {
+        const text = s.kind === 'write' && s.exercise.file in files ? carried(s.exercise) : undefined;
+        if (text !== undefined && s.kind === 'write') files[s.exercise.file] = text;
+      }
+      // Files already open keep the learner's edits; the setup applies its own copy.
+      set((s) => ({ files: { ...Object.fromEntries(Object.entries(files).filter(([n]) => !(n in s.files))), ...s.files } }));
+      for (const c of l.setup.commands) await get().run(c, 'setup', files);
       items.push(l.setup.description);
     }
     set({ prepared: { lessonId: l.id, items } });
