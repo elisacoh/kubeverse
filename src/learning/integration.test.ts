@@ -94,6 +94,47 @@ describe('Lesson 1 with the real stores', () => {
     expect(app().mode).toBe('learn');
   });
 
+  it('unlocks every step of a lesson completed before steps were saved', () => {
+    useLearningStore.setState({ completedLessons: ['birth-of-a-cluster'] });
+    app().setMode('learn');
+    learning().startLesson('birth-of-a-cluster');
+    expect(learning().everDone).toEqual(lesson.objectives.map((o) => o.id));
+    const last = lesson.objectives.at(-1)!.id;
+    learning().goToObjective(last);
+    expect(current()).toBe(last);
+    expect(nodeNames()).toEqual(['control-plane-1', 'worker-1', 'worker-2']);
+    learning().goToObjective('meet-control-plane');
+    expect(nodeNames()).toEqual(['control-plane-1']);
+  });
+
+  it('goes back to a validated step without locking the later ones again', () => {
+    app().setMode('learn');
+    learning().perform('initialize-cluster');
+    app().focusNode('control-plane-1');
+    learning().perform('add-worker-node');
+    learning().perform('add-worker-node');
+    expect(nodeNames()).toHaveLength(3);
+    const reached = current();
+    const validated = [...learning().everDone];
+
+    learning().goToObjective('meet-control-plane');
+    expect(current()).toBe('meet-control-plane');
+    expect(nodeNames()).toEqual(['control-plane-1']);
+    expect(learning().everDone).toEqual(validated);
+
+    // Jump forward again: the furthest step comes back with its world.
+    learning().goToObjective(reached!);
+    expect(current()).toBe(reached);
+    expect(nodeNames()).toHaveLength(3);
+
+    // Redoing a step from a rewound world still works.
+    learning().goToObjective('meet-control-plane');
+    app().focusNode('control-plane-1');
+    expect(completed()).toContain('meet-control-plane');
+    learning().perform('add-worker-node');
+    expect(nodeNames()).toEqual(['control-plane-1', 'worker-1']);
+  });
+
   it('replay restores the empty universe', () => {
     app().setMode('learn');
     learning().perform('initialize-cluster');

@@ -152,6 +152,7 @@ export function CameraRig() {
       dampingFactor={0.08}
       rotateSpeed={0.6}
       zoomSpeed={0.8}
+      zoomToCursor
       panSpeed={0.8}
       screenSpacePanning
       minDistance={inside ? 4 : 2.5}

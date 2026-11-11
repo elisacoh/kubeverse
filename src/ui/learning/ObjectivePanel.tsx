@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { BookOpen, Check, ChevronDown, ChevronUp, Circle, Lightbulb, ListTree, Lock, Play, RotateCcw } from 'lucide-react';
-import { buildActionLabel, canPerform, currentObjective, objectiveCounter, objectiveStatus } from '../../learning/engine';
+import { buildActionLabel, canPerform, currentObjective, objectiveCounter } from '../../learning/engine';
 import { findConcept } from '../../learning/concepts';
 import { useLearningStore } from '../../learning/useLearningStore';
 import type { Lesson, LessonSession } from '../../learning/types';
@@ -13,12 +13,16 @@ export function ObjectivePanel({ lesson, session }: { lesson: Lesson; session: L
   const requestHint = useLearningStore((s) => s.requestHint);
   const openConcept = useLearningStore((s) => s.openConcept);
   const resetLesson = useLearningStore((s) => s.resetLesson);
+  const goToObjective = useLearningStore((s) => s.goToObjective);
+  const everDone = useLearningStore((s) => s.everDone);
+  const furthest = useLearningStore((s) => s.furthest);
   const [collapsed, setCollapsed] = useState(false);
   const [showList, setShowList] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
 
   const objective = currentObjective(lesson, progress);
-  const done = progress.completed.length;
+  const frontier = furthest ? currentObjective(lesson, furthest.progress) : undefined;
+  const done = everDone.length;
   const total = lesson.objectives.length;
   const level = objective ? (hintLevel[objective.id] ?? 0) : 0;
   const counter = objective ? objectiveCounter(progress, objective) : undefined;
@@ -130,36 +134,44 @@ export function ObjectivePanel({ lesson, session }: { lesson: Lesson; session: L
           {showList && (
             <ol className="mt-1.5 space-y-0.5">
               {lesson.objectives.map((o) => {
-                const status = objectiveStatus(progress, o);
+                const validated = everDone.includes(o.id);
+                const unlocked = validated || o.id === frontier?.id;
+                const here = o.id === objective?.id;
                 const concept = findConcept(o.discovers);
-                const icon =
-                  status === 'done' ? (
-                    <Check className="size-3.5 text-ok" />
-                  ) : status === 'available' ? (
-                    <Circle className="size-3 text-teal" />
-                  ) : (
-                    <Lock className="size-3 text-lavender/40" />
-                  );
+                const icon = validated ? (
+                  <Check className="size-3.5 shrink-0 text-ok" />
+                ) : unlocked ? (
+                  <Circle className="size-3 shrink-0 text-teal" />
+                ) : (
+                  <Lock className="size-3 shrink-0 text-lavender/40" />
+                );
                 return (
-                  <li key={o.id}>
-                    {status === 'done' && concept ? (
+                  <li key={o.id} className="flex items-center gap-0.5">
+                    {unlocked && !here ? (
                       <button
                         type="button"
-                        onClick={() => openConcept(concept.id)}
-                        className="flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left text-[11.5px] text-white/85 hover:bg-white/[0.06]"
-                        title={`Review: ${concept.title}`}
+                        onClick={() => goToObjective(o.id)}
+                        className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-1.5 py-1 text-left text-[11.5px] text-white/85 hover:bg-white/[0.06]"
+                        title="Go to this step"
                       >
                         {icon}
-                        <span className="flex-1 truncate">{o.title}</span>
-                        <BookOpen className="size-3 text-lavender/50" />
+                        <span className="truncate">{o.title}</span>
                       </button>
                     ) : (
                       <div
-                        className={`flex items-center gap-2 px-1.5 py-1 text-[11.5px] ${status === 'locked' ? 'text-lavender/40' : 'text-white/85'}`}
+                        aria-current={here ? 'step' : undefined}
+                        className={`flex min-w-0 flex-1 items-center gap-2 rounded-md px-1.5 py-1 text-[11.5px] ${
+                          here ? 'bg-cyan/10 text-cyan' : 'text-lavender/40'
+                        }`}
                       >
                         {icon}
                         <span className="truncate">{o.title}</span>
                       </div>
+                    )}
+                    {validated && concept && (
+                      <button type="button" onClick={() => openConcept(concept.id)} className="hud-btn !p-1" title={`Review: ${concept.title}`}>
+                        <BookOpen className="size-3" />
+                      </button>
                     )}
                   </li>
                 );

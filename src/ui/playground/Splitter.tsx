@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { ChevronsLeftRight, ChevronsUpDown } from 'lucide-react';
 
 /** A size in px that the user can drag, clamped and remembered across visits. */
 export function useStoredSize(key: string, initial: number, min: number, max: number) {
@@ -58,13 +59,23 @@ export function Splitter({ axis, size, onSize, invert = false, label }: { axis: 
       onPointerMove={onPointerMove}
       onPointerUp={end}
       onPointerCancel={end}
-      className={`group relative z-10 shrink-0 ${axis === 'x' ? 'w-2 cursor-col-resize' : 'h-2 cursor-row-resize'} focus-visible:outline-none`}
+      title={label}
+      className={`group relative z-10 shrink-0 ${axis === 'x' ? 'h-full w-2.5 cursor-col-resize' : 'h-2.5 w-full cursor-row-resize'} focus-visible:outline-none`}
     >
       <span
         className={`absolute rounded-full transition-colors ${dragging ? 'bg-teal/70' : 'bg-white/10 group-hover:bg-teal/50 group-focus-visible:bg-teal/70'} ${
           axis === 'x' ? 'inset-y-6 left-1/2 w-0.5 -translate-x-1/2' : 'inset-x-6 top-1/2 h-0.5 -translate-y-1/2'
         }`}
       />
+      <span
+        className={`pointer-events-none absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border transition-all ${
+          dragging
+            ? 'border-teal/70 bg-[#0d1a3a] text-teal opacity-100'
+            : 'border-white/10 bg-[#0b1430]/90 text-lavender/50 opacity-60 group-hover:border-teal/60 group-hover:text-teal group-hover:opacity-100 group-focus-visible:opacity-100'
+        } ${axis === 'x' ? 'h-7 w-4' : 'h-4 w-7'}`}
+      >
+        {axis === 'x' ? <ChevronsLeftRight className="size-3" /> : <ChevronsUpDown className="size-3" />}
+      </span>
     </div>
   );
 }
